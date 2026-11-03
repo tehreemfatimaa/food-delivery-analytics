@@ -1,4 +1,5 @@
 import os
+import textwrap
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -32,75 +33,357 @@ from src.analysis import (
 from src.ai_explanation import generate_ai_explanation, answer_user_question_ai
 from src.visualization import plot_traffic_impact, plot_distance_vs_time, plot_weather_impact
 
+
+def render_html(html_code):
+    """
+    Renders pure HTML cleanly without allowing Markdown parsers to convert
+    indented lines into raw <pre><code> code blocks.
+    """
+    clean_html = textwrap.dedent(html_code).strip()
+    if hasattr(st, "html"):
+        st.html(clean_html)
+    else:
+        st.markdown(clean_html, unsafe_allow_html=True)
+
+
 # ==============================================================================
-# 1. STREAMLIT PAGE CONFIGURATION & CUSTOM CSS STYLING
+# 1. STREAMLIT PAGE CONFIGURATION & LUXURY EXECUTIVE CSS STYLING
 # ==============================================================================
 st.set_page_config(
-    page_title="Food Delivery Analytics Dashboard",
-    page_icon="🍔",
+    page_title="SwiftPulse | Food Delivery Analytics",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for executive aesthetic, polished cards, and status pills
+# Custom High-End Styling: Glassmorphism, Google Fonts, Vibrant Gradients, Micro-animations
 st.markdown(
     """
     <style>
-    /* Metric Card Styling */
-    div[data-testid="stMetric"] {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 12px 16px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    div[data-testid="stMetric"] label {
-        font-weight: 600;
-        color: #495057;
-        font-size: 0.85rem;
+
+    /* =========================================================================
+       MATCH TOP HEADER & CONTROLS TO THE DARK THEME
+       ========================================================================= */
+    /* 1. Top rainbow line styled with theme accent gradient */
+    [data-testid="stDecoration"] {
+        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #f43f5e) !important;
+        height: 3px !important;
+    }
+
+    /* 2. Header container turned seamless dark */
+    header,
+    header[data-testid="stHeader"],
+    .stAppHeader,
+    [data-testid="stHeader"] {
+        background-color: #0b0f19 !important;
+        background: #0b0f19 !important;
+        color: #f8fafc !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* 3. Toolbar & action buttons in header */
+    [data-testid="stToolbar"],
+    [data-testid="stToolbar"] *,
+    header[data-testid="stHeader"] button,
+    header[data-testid="stHeader"] a,
+    header[data-testid="stHeader"] svg,
+    header[data-testid="stHeader"] span {
+        color: #94a3b8 !important;
+        fill: #94a3b8 !important;
+        background: transparent !important;
+    }
+
+    /* 4. Status widget ("Source file changed", "Rerun", "Always rerun") */
+    [data-testid="stStatusWidget"],
+    .stStatusWidget,
+    div[data-testid="stStatusWidget"] {
+        background-color: #1e293b !important;
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 10px !important;
+    }
+
+    div[data-testid="stStatusWidget"] * {
+        color: #cbd5e1 !important;
+    }
+
+    div[data-testid="stStatusWidget"] button {
+        background: rgba(99, 102, 241, 0.25) !important;
+        color: #c7d2fe !important;
+        border: 1px solid rgba(129, 140, 248, 0.4) !important;
+        border-radius: 8px !important;
+    }
+
+    div[data-testid="stStatusWidget"] button:hover {
+        background: rgba(99, 102, 241, 0.5) !important;
+        color: #ffffff !important;
+    }
+
+    /* 5. Overall App Background Glow */
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        background: radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 90%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+                    #0b0f19 !important;
+        background-color: #0b0f19 !important;
+        color: #f8fafc;
+    }
+
+    /* Top Brand Hero Banner */
+    .hero-container {
+        position: relative;
+        padding: 24px 30px;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+    .hero-container::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #f43f5e);
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(129, 140, 248, 0.3);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #a5b4fc;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #10b981;
+        animation: pulseAnimation 2s infinite;
+    }
+    @keyframes pulseAnimation {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .hero-title {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+    .hero-subtitle {
+        color: #94a3b8;
+        font-size: 0.96rem;
+        font-weight: 400;
+        margin-top: 6px;
+    }
+
+    /* KPI Cards Styling */
+    .kpi-card {
+        position: relative;
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px;
+        backdrop-filter: blur(14px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        min-height: 125px;
+    }
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(129, 140, 248, 0.4);
+        box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5), 0 0 16px rgba(99, 102, 241, 0.2);
+    }
+    .kpi-top-bar {
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .kpi-label {
+        font-size: 0.73rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        color: #94a3b8;
     }
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        color: #1e293b;
-        font-weight: 700;
-        font-size: 1.4rem;
+    .kpi-icon-box {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
     }
-
-    /* Badge & Status Pills */
-    .status-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin-right: 6px;
-    }
-    .badge-success { background-color: #d1fae5; color: #065f46; }
-    .badge-warning { background-color: #fef3c7; color: #92400e; }
-    .badge-info { background-color: #dbeafe; color: #1e40af; }
-
-    /* Custom Header Styling */
-    .main-header {
-        font-size: 1.8rem;
+    .kpi-value {
+        font-size: 1.55rem;
         font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 2px;
+        color: #ffffff;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+        margin-bottom: 6px;
     }
-    .sub-header {
-        color: #64748b;
-        font-size: 0.95rem;
-        margin-bottom: 20px;
+    .kpi-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.2px;
     }
 
-    /* Custom Container Boxes */
-    .card-box {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        padding: 8px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        white-space: nowrap;
+        background: transparent;
         border-radius: 10px;
-        padding: 18px;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        color: #94a3b8;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 0 16px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(129, 140, 248, 0.15) 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(129, 140, 248, 0.5) !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    /* Card Containers */
+    .executive-card {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.65) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(14px);
+        margin-bottom: 18px;
+        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.35);
+    }
+    .card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    /* Highlight Banner Cards */
+    .highlight-card {
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .highlight-card.cyan {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border-left: 4px solid #06b6d4;
+    }
+    .highlight-card.amber {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border-left: 4px solid #f59e0b;
+    }
+    .highlight-card.rose {
+        background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border-left: 4px solid #f43f5e;
+    }
+    .highlight-card.indigo {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+        border-left: 4px solid #6366f1;
+    }
+
+    /* Sidebar Customization */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0b0f19 0%, #111827 100%);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sidebar-brand-box {
+        text-align: center;
+        padding: 10px 0 14px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 16px;
+    }
+    .sidebar-brand-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-top: 6px;
+    }
+    .sidebar-stat-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 14px;
+        font-size: 0.82rem;
+    }
+
+    /* Buttons */
+    div.stButton > button {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: #ffffff;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 10px 20px;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        transition: all 0.25s ease;
+    }
+    div.stButton > button:hover {
+        background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Dataframe Polish */
+    div[data-testid="stDataFrame"] {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
     </style>
     """,
@@ -108,19 +391,47 @@ st.markdown(
 )
 
 
-# Cache data loading & cleaning for fast interaction
+
+# Helper function for unified Plotly dark theme
+def apply_dark_plotly_theme(fig, title="", height=400):
+    fig.update_layout(
+        title=f"<b>{title}</b>" if title else None,
+        height=height,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#e2e8f0", family="Plus Jakarta Sans, sans-serif", size=12),
+        margin=dict(l=40, r=40, t=60 if title else 30, b=40),
+        xaxis=dict(
+            gridcolor="rgba(255, 255, 255, 0.06)",
+            zerolinecolor="rgba(255, 255, 255, 0.1)",
+            linecolor="rgba(255, 255, 255, 0.1)",
+            tickfont=dict(color="#94a3b8"),
+        ),
+        yaxis=dict(
+            gridcolor="rgba(255, 255, 255, 0.06)",
+            zerolinecolor="rgba(255, 255, 255, 0.1)",
+            linecolor="rgba(255, 255, 255, 0.1)",
+            tickfont=dict(color="#94a3b8"),
+        ),
+        legend=dict(
+            bgcolor="rgba(15, 23, 42, 0.7)",
+            bordercolor="rgba(255, 255, 255, 0.1)",
+            borderwidth=1,
+            font=dict(color="#cbd5e1"),
+        ),
+    )
+    return fig
+
+
+# Cache data loading & cleaning for lightning-fast responsiveness
 @st.cache_data
 def get_dataset():
-    """
-    Load raw dataset, inspect metadata, and execute clean_dataset_with_report.
-    """
     raw_df, dataset_path = load_raw_data()
     raw_info = inspect_raw_data(raw_df)
     cleaned_df, audit_report = clean_dataset_with_report(raw_df)
     return raw_df, cleaned_df, dataset_path, raw_info, audit_report
 
 
-# Load dataset gracefully with error handling
 try:
     raw_df, cleaned_df, dataset_path, raw_info, audit_report = get_dataset()
     data_loaded = True
@@ -130,157 +441,257 @@ except Exception as e:
 
 if data_loaded:
     # ==============================================================================
-    # 2. SIDEBAR & DYNAMIC FILTERS
+    # 2. SIDEBAR NAVIGATION & DYNAMIC FILTERS
     # ==============================================================================
-    st.sidebar.title("🍔 Food Delivery Analytics")
-    st.sidebar.markdown(f"**Dataset**: `{os.path.basename(dataset_path)}`")
-    st.sidebar.markdown(f"**Raw Rows**: {raw_info['num_rows']:,} | **Cols**: {raw_info['num_cols']}")
-    st.sidebar.markdown(f"**Cleaned Records**: {len(cleaned_df):,}")
-    st.sidebar.markdown("---")
+    with st.sidebar:
+        # Brand Logo & Title Box
+        if os.path.exists("assets/logo.jpg"):
+            st.image("assets/logo.jpg", use_container_width=True)
 
-    st.sidebar.header("🔍 Analysis Filters")
+        render_html(
+            """
+            <div class="sidebar-brand-box">
+                <div class="sidebar-brand-title">SWIFTPULSE ANALYTICS</div>
+                <div style="font-size: 0.78rem; color: #94a3b8;">Fleet Intelligence & Delivery Optimization</div>
+            </div>
+            """
+        )
 
-    # City Filter
-    city_options = ["All"]
-    if "City" in cleaned_df.columns:
-        city_options += sorted([str(x) for x in cleaned_df["City"].dropna().unique() if str(x) != "nan"])
-    selected_city = st.sidebar.selectbox("Filter by City", options=city_options)
+        # Dataset Status Capsule
+        render_html(
+            f"""
+            <div class="sidebar-stat-card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: #64748b; font-weight: 600;">SOURCE FILE</span>
+                    <span style="color: #38bdf8; font-weight: 700;">{os.path.basename(dataset_path)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: #64748b; font-weight: 600;">RAW RECORDS</span>
+                    <span style="color: #f8fafc; font-weight: 700;">{raw_info['num_rows']:,}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600;">CLEANED ACTIVE</span>
+                    <span style="color: #10b981; font-weight: 700;">{len(cleaned_df):,}</span>
+                </div>
+            </div>
+            """
+        )
 
-    # Traffic Density Filter
-    traffic_options = ["All"]
-    if "Road_traffic_density" in cleaned_df.columns:
-        traffic_options += sorted([str(x) for x in cleaned_df["Road_traffic_density"].dropna().unique() if str(x) != "nan"])
-    selected_traffic = st.sidebar.selectbox("Filter by Traffic Density", options=traffic_options)
+        st.markdown("**🎯 Operational Filters**")
 
-    # Weather Condition Filter
-    weather_options = ["All"]
-    if "Weather_conditions" in cleaned_df.columns:
-        weather_options += sorted([str(x) for x in cleaned_df["Weather_conditions"].dropna().unique() if str(x) != "nan"])
-    selected_weather = st.sidebar.selectbox("Filter by Weather Condition", options=weather_options)
+        # 1. City Filter
+        city_options = ["All Cities"]
+        if "City" in cleaned_df.columns:
+            city_options += sorted([str(x) for x in cleaned_df["City"].dropna().unique() if str(x) != "nan"])
+        selected_city = st.selectbox("City Region", options=city_options)
 
-    # Vehicle Condition Filter
-    vehicle_options = ["All"]
-    if "Vehicle_condition" in cleaned_df.columns:
-        vehicle_options += sorted([str(x) for x in cleaned_df["Vehicle_condition"].dropna().unique() if str(x) != "nan"])
-    selected_vehicle = st.sidebar.selectbox("Filter by Vehicle Condition", options=vehicle_options)
+        # 2. Traffic Density Filter
+        traffic_options = ["All Densities"]
+        if "Road_traffic_density" in cleaned_df.columns:
+            traffic_options += sorted([str(x) for x in cleaned_df["Road_traffic_density"].dropna().unique() if str(x) != "nan"])
+        selected_traffic = st.selectbox("Road Traffic Density", options=traffic_options)
 
-    # Reset Filters Button
-    if st.sidebar.button("🔄 Reset Filters"):
-        if hasattr(st, "rerun"):
-            st.rerun()
-        elif hasattr(st, "experimental_rerun"):
-            st.experimental_rerun()
+        # 3. Weather Condition Filter
+        weather_options = ["All Weather"]
+        if "Weather_conditions" in cleaned_df.columns:
+            weather_options += sorted([str(x) for x in cleaned_df["Weather_conditions"].dropna().unique() if str(x) != "nan"])
+        selected_weather = st.selectbox("Weather Condition", options=weather_options)
 
-    # Apply filters dynamically to DataFrame
+        # 4. Vehicle Condition Filter
+        vehicle_options = ["All Conditions"]
+        if "Vehicle_condition" in cleaned_df.columns:
+            vehicle_options += sorted([str(x) for x in cleaned_df["Vehicle_condition"].dropna().unique() if str(x) != "nan"])
+        selected_vehicle = st.selectbox("Vehicle Rating / Condition", options=vehicle_options)
+
+        # Reset Filters
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        if st.button("🔄 Reset All Filters", use_container_width=True):
+            if hasattr(st, "rerun"):
+                st.rerun()
+            elif hasattr(st, "experimental_rerun"):
+                st.experimental_rerun()
+
+        st.markdown("---")
+        st.markdown(
+            """
+            <div style="font-size: 0.74rem; color: #64748b; text-align: center;">
+                Powered by Python, Streamlit, Plotly & LLM Intelligence.<br>Built for Data Hackathons.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Filter execution
     filtered_df = cleaned_df.copy()
-    if selected_city != "All" and "City" in filtered_df.columns:
+    if selected_city != "All Cities" and "City" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["City"].astype(str) == selected_city]
-    if selected_traffic != "All" and "Road_traffic_density" in filtered_df.columns:
+    if selected_traffic != "All Densities" and "Road_traffic_density" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Road_traffic_density"].astype(str) == selected_traffic]
-    if selected_weather != "All" and "Weather_conditions" in filtered_df.columns:
+    if selected_weather != "All Weather" and "Weather_conditions" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Weather_conditions"].astype(str) == selected_weather]
-    if selected_vehicle != "All" and "Vehicle_condition" in filtered_df.columns:
+    if selected_vehicle != "All Conditions" and "Vehicle_condition" in filtered_df.columns:
         filtered_df = filtered_df[filtered_df["Vehicle_condition"].astype(str) == selected_vehicle]
 
-    st.sidebar.markdown("---")
-    st.sidebar.info("💡 **Hackathon Project**: Built with Python, Pandas, Streamlit, Plotly & OpenAI/Gemini LLM API.")
-
-    # ==============================================================================
-    # 3. MAIN DASHBOARD BANNER & KPI METRICS
-    # ==============================================================================
-    st.markdown('<div class="main-header">🚚 FOOD DELIVERY ANALYTICS DASHBOARD</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">Data-Driven Operational Performance Analysis & Optimization System</div>', unsafe_allow_html=True)
-
-    # Detect empty filtered dataset (e.g., incompatible filter combination)
     is_empty = len(filtered_df) == 0
-
-    if is_empty:
-        # Show exact prominent warning requested
-        st.warning("⚠️ No delivery records match the selected filters. Please choose a different filter combination.")
-
-    # Compute metrics for filtered dataset
     basic_metrics = calculate_basic_metrics(filtered_df)
 
-    # Helper to safely format metric values — avoids showing 0.0 or NaN when data is absent
     def fmt(value, suffix=""):
         if value is None or value == "N/A" or (isinstance(value, float) and (np.isnan(value))):
             return "N/A"
         return f"{value}{suffix}"
 
-    # Display KPI Cards — always visible so the layout stays stable
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    with col1:
-        st.metric("Total Deliveries", "0" if is_empty else f"{basic_metrics['total_deliveries']:,}")
-    with col2:
-        st.metric("Avg Delivery Time", fmt(basic_metrics["avg_delivery_time"], " min"))
-    with col3:
-        st.metric("Avg Distance", fmt(basic_metrics["avg_distance"], " km"))
-    with col4:
-        st.metric("Avg Speed", fmt(basic_metrics["avg_speed_kmh"], " km/h"))
-    with col5:
-        st.metric("Avg Rating", fmt(basic_metrics["avg_rating"], " / 5.0"))
-    with col6:
-        st.metric("Avg Driver Age", fmt(basic_metrics["avg_age"], " yrs"))
+    # ==============================================================================
+    # 3. EXECUTIVE HERO BANNER & KPI METRICS
+    # ==============================================================================
+    render_html(
+        f"""
+        <div class="hero-container">
+            <div class="hero-badge">
+                <div class="pulse-dot"></div>
+                SWIFTPULSE FLEET ANALYTICS ENGINE &bull; {len(filtered_df):,} ACTIVE TRIPS
+            </div>
+            <div class="hero-title">Food Delivery Operational Performance</div>
+            <div class="hero-subtitle">
+                High-resolution telemetry analysis uncovering delivery duration bottlenecks, Haversine spatial correlation, and compounding weather cascades.
+            </div>
+        </div>
+        """
+    )
 
-    st.markdown("---")
+    if is_empty:
+        st.warning("⚠️ No delivery records match the selected filters. Please adjust or reset your filter combination.")
+
+    # High-End Custom KPI Grid using st.columns to prevent Markdown indentation issues
+    tot_val = "0" if is_empty else f"{basic_metrics['total_deliveries']:,}"
+    time_val = fmt(basic_metrics["avg_delivery_time"], " m")
+    dist_val = fmt(basic_metrics["avg_distance"], " km")
+    spd_val = fmt(basic_metrics["avg_speed_kmh"], " km/h")
+    rat_val = fmt(basic_metrics["avg_rating"], " ★")
+    age_val = fmt(basic_metrics["avg_age"], " yrs")
+
+    k_col1, k_col2, k_col3, k_col4, k_col5, k_col6 = st.columns(6)
+
+    with k_col1:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #38bdf8, #0284c7);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">TOTAL DELIVERIES</span>
+                <div class="kpi-icon-box" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">📦</div>
+            </div>
+            <div class="kpi-value">{tot_val}</div>
+            <span class="kpi-pill" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8;">Verified Records</span>
+        </div>
+        """)
+
+    with k_col2:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">AVG DELIVERY TIME</span>
+                <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">⏱️</div>
+            </div>
+            <div class="kpi-value">{time_val}</div>
+            <span class="kpi-pill" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">Mean Duration</span>
+        </div>
+        """)
+
+    with k_col3:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #10b981, #059669);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">AVG DISTANCE</span>
+                <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">📍</div>
+            </div>
+            <div class="kpi-value">{dist_val}</div>
+            <span class="kpi-pill" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">Haversine Math</span>
+        </div>
+        """)
+
+    with k_col4:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #818cf8, #4f46e5);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">AVG FLEET SPEED</span>
+                <div class="kpi-icon-box" style="background: rgba(129, 140, 248, 0.15); color: #818cf8;">⚡</div>
+            </div>
+            <div class="kpi-value">{spd_val}</div>
+            <span class="kpi-pill" style="background: rgba(129, 140, 248, 0.12); color: #818cf8;">Transit Velocity</span>
+        </div>
+        """)
+
+    with k_col5:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #f43f5e, #e11d48);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">PARTNER RATING</span>
+                <div class="kpi-icon-box" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;">⭐</div>
+            </div>
+            <div class="kpi-value">{rat_val}</div>
+            <span class="kpi-pill" style="background: rgba(244, 63, 94, 0.12); color: #f43f5e;">Out of 5.0</span>
+        </div>
+        """)
+
+    with k_col6:
+        render_html(f"""
+        <div class="kpi-card">
+            <div class="kpi-top-bar" style="background: linear-gradient(90deg, #c084fc, #9333ea);"></div>
+            <div class="kpi-header">
+                <span class="kpi-label">PARTNER AGE</span>
+                <div class="kpi-icon-box" style="background: rgba(192, 132, 252, 0.15); color: #c084fc;">👤</div>
+            </div>
+            <div class="kpi-value">{age_val}</div>
+            <span class="kpi-pill" style="background: rgba(192, 132, 252, 0.12); color: #c084fc;">Fleet Cohort</span>
+        </div>
+        """)
+
+    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
     # ==============================================================================
-    # 4. TABS NAVIGATION
+    # 4. LUXURY TABS NAVIGATION
     # ==============================================================================
     tab_overview, tab_cleaning, tab_comp, tab_viz, tab_insights, tab_ai = st.tabs([
-        "📊 Overview",
-        "🧹 Data Cleaning Pipeline",
+        "📊 Telemetry Overview",
+        "🧹 Pipeline & Data Audit",
         "🏆 Competition Questions",
-        "📈 Visualizations",
+        "📈 Interactive Analytics",
         "💡 Business Insights",
-        "🤖 AI Business Explanation",
+        "🤖 AI Intelligence & Chat",
     ])
 
     # ------------------------------------------------------------------------------
-    # TAB 1: OVERVIEW
+    # TAB 1: TELEMETRY OVERVIEW
     # ------------------------------------------------------------------------------
     with tab_overview:
-        st.header("📊 Operations Overview & Dataset Metadata")
+        c_left, c_right = st.columns([1, 1])
 
-        st.markdown(
-            """
-            Welcome to the **Food Delivery Analytics System**. This application programmatically evaluates 
-            operational fulfillment data to uncover root causes of delivery delays, quantify distance vs. time 
-            relationships, and evaluate compound traffic/weather bottlenecks.
-            """
-        )
-
-        row1_col1, row1_col2 = st.columns(2)
-        with row1_col1:
-            st.subheader("📋 Active Dataset Metrics")
+        with c_left:
+            render_html(
+                """
+                <div class="executive-card">
+                    <div class="card-title">📋 Executive Dataset Summary</div>
+                </div>
+                """
+            )
             if is_empty:
-                # No records match — show N/A for all averages
-                summary_table = pd.DataFrame({
-                    "Metric": [
-                        "Total Delivery Records",
-                        "Min Delivery Time",
-                        "Max Delivery Time",
-                        "Average Delivery Time",
-                        "Average Delivery Distance",
-                        "Average Fleet Speed",
-                        "Average Delivery Partner Rating",
-                        "Average Delivery Partner Age"
-                    ],
-                    "Value": ["0", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]
-                })
+                st.info("No data available for the selected filters.")
             else:
                 summary_table = pd.DataFrame({
-                    "Metric": [
-                        "Total Delivery Records",
-                        "Min Delivery Time",
-                        "Max Delivery Time",
-                        "Average Delivery Time",
-                        "Average Delivery Distance",
-                        "Average Fleet Speed",
-                        "Average Delivery Partner Rating",
-                        "Average Delivery Partner Age"
+                    "Operational Parameter": [
+                        "Total Delivery Trips",
+                        "Shortest Trip Duration",
+                        "Longest Trip Duration",
+                        "Average Delivery Duration",
+                        "Average Travel Distance",
+                        "Estimated Transit Velocity",
+                        "Mean Rider Customer Rating",
+                        "Average Delivery Rider Age"
                     ],
-                    "Value": [
+                    "Observed Metric": [
                         f"{basic_metrics['total_deliveries']:,}",
                         fmt(basic_metrics["min_delivery_time"], " min"),
                         fmt(basic_metrics["max_delivery_time"], " min"),
@@ -291,51 +702,91 @@ if data_loaded:
                         fmt(basic_metrics["avg_age"], " years"),
                     ]
                 })
-            st.table(summary_table)
+                st.dataframe(summary_table, use_container_width=True, hide_index=True)
 
-        with row1_col2:
-            st.subheader("📈 Key Statistical Distribution")
+        with c_right:
+            render_html(
+                """
+                <div class="executive-card">
+                    <div class="card-title">📈 Statistical Spread & Distribution</div>
+                </div>
+                """
+            )
             if is_empty:
-                st.info("No data available for the selected filter combination.")
+                st.info("No data available for the selected filters.")
             elif "Time_taken (min)" in filtered_df.columns and "distance_km" in filtered_df.columns:
                 desc = filtered_df[["Time_taken (min)", "distance_km"]].describe().T
                 desc.rename(columns={
-                    "count": "Records", "mean": "Mean", "std": "Std Dev",
+                    "count": "Trips", "mean": "Mean", "std": "Std Dev",
                     "min": "Min", "25%": "25th %", "50%": "Median",
                     "75%": "75th %", "max": "Max"
                 }, inplace=True)
                 st.dataframe(desc.round(2), use_container_width=True)
 
     # ------------------------------------------------------------------------------
-    # TAB 2: ADVANCED DATA CLEANING PIPELINE (TRANSPARENT AUDIT)
+    # TAB 2: PIPELINE & DATA CLEANING AUDIT
     # ------------------------------------------------------------------------------
     with tab_cleaning:
-        st.header("🧹 Data Cleaning Pipeline & Audit Report")
-
-        st.markdown(
+        render_html(
             """
-            This section provides full transparency into the programmatic data cleaning and transformation pipeline.
-            The pipeline converts messy raw inputs into a structured, analysis-ready format while strictly preserving
-            data integrity (e.g. valid `NaN`s in driver ratings or age are never artificially converted to zero).
+            <div class="highlight-card cyan">
+                <h4 style="margin:0 0 6px 0; color: #38bdf8;">🛡️ Programmatic Data Integrity & Transformation Audit</h4>
+                <div style="font-size: 0.88rem; color: #cbd5e1;">
+                    Every cleaning step is calculated programmatically without lossy heuristic imputations. 
+                    Valid missing entries in Rider Age and Rating are preserved as strictly statistical <code>NaN</code>s 
+                    to avoid biasing regression models or operational KPIs.
+                </div>
+            </div>
             """
         )
 
-        # 1. Audit Summary Metric Cards
-        aud_c1, aud_c2, aud_c3, aud_c4 = st.columns(4)
-        with aud_c1:
-            st.metric("Raw Dataset Size", f"{audit_report['raw_rows']:,} rows × {audit_report['raw_cols']} cols")
-        with aud_c2:
-            st.metric("Cleaned Valid Dataset", f"{audit_report['cleaned_rows']:,} rows × {audit_report['cleaned_cols']} cols")
-        with aud_c3:
-            st.metric("Duplicates Handled", f"{audit_report['duplicates_removed']} duplicates")
-        with aud_c4:
-            st.metric("Missing Values Handled", f"{audit_report['total_missing_before']:,} → {audit_report['total_missing_after']:,}")
+        # 4 Audit Summary Cards
+        ac1, ac2, ac3, ac4 = st.columns(4)
+        with ac1:
+            render_html(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">RAW INGESTION</div>
+                    <div class="kpi-value" style="font-size: 1.35rem; color: #38bdf8;">{audit_report['raw_rows']:,} rows</div>
+                    <div style="font-size: 0.76rem; color: #94a3b8;">{audit_report['raw_cols']} original columns</div>
+                </div>
+                """
+            )
+        with ac2:
+            render_html(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">CLEANED VALID POOL</div>
+                    <div class="kpi-value" style="font-size: 1.35rem; color: #10b981;">{audit_report['cleaned_rows']:,} rows</div>
+                    <div style="font-size: 0.76rem; color: #94a3b8;">{audit_report['cleaned_cols']} standardized schema</div>
+                </div>
+                """
+            )
+        with ac3:
+            render_html(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">DUPLICATES PURGED</div>
+                    <div class="kpi-value" style="font-size: 1.35rem; color: #f59e0b;">{audit_report['duplicates_removed']}</div>
+                    <div style="font-size: 0.76rem; color: #94a3b8;">Exact row matches dropped</div>
+                </div>
+                """
+            )
+        with ac4:
+            render_html(
+                f"""
+                <div class="kpi-card">
+                    <div class="kpi-label">MISSING CELLS HANDLED</div>
+                    <div class="kpi-value" style="font-size: 1.35rem; color: #c084fc;">{audit_report['total_missing_before']:,} → {audit_report['total_missing_after']:,}</div>
+                    <div style="font-size: 0.76rem; color: #94a3b8;">Preserved true statistical NaNs</div>
+                </div>
+                """
+            )
 
-        st.markdown("---")
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        # 2. Executive Before vs. After Dataset Health Comparison Table
-        st.subheader("📋 Dataset Health: Before vs. After Cleaning")
-
+        # Before vs After Health Table
+        render_html("<div class='card-title'>📋 Before vs. After System Transformation Health</div>")
         health_comparison = pd.DataFrame({
             "Dataset Dimension": [
                 "Total Record Rows",
@@ -380,344 +831,217 @@ if data_loaded:
         })
         st.dataframe(health_comparison, use_container_width=True, hide_index=True)
 
-        st.markdown("---")
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-        # 3. Interactive Before & After Data Previews
-        st.subheader("👀 Data Preview: Raw (Before) vs. Cleaned (After)")
-
-        preview_tab_raw, preview_tab_clean, preview_tab_side = st.tabs([
-            "📄 Raw Dataset Sample (First 10 Rows)",
-            "✨ Cleaned Dataset Sample (First 10 Rows)",
-            "🔄 Side-by-Side Comparison"
-        ])
-
-        with preview_tab_raw:
-            st.caption("Raw data as loaded directly from the original CSV file before any transformations:")
-            st.dataframe(raw_df.head(10), use_container_width=True)
-
-        with preview_tab_clean:
-            st.caption("Cleaned, standardized, and structured DataFrame ready for analysis:")
-            st.dataframe(cleaned_df.head(10), use_container_width=True)
-
-        with preview_tab_side:
-            st.caption("Side-by-side view of key operational columns before vs after:")
-            side_col1, side_col2 = st.columns(2)
-            with side_col1:
-                st.markdown("**Raw Columns (Sample)**")
-                raw_preview_cols = [c for c in raw_df.columns if any(k in c.lower() for k in ["time", "weather", "traffic", "age", "rating", "lat", "long", "city"])][:5]
-                st.dataframe(raw_df[raw_preview_cols].head(8) if raw_preview_cols else raw_df.head(8), use_container_width=True)
-            with side_col2:
-                st.markdown("**Cleaned Columns (Standardized)**")
-                clean_preview_cols = [c for c in ["Time_taken (min)", "Road_traffic_density", "Weather_conditions", "Delivery_person_Age", "distance_km", "City"] if c in cleaned_df.columns]
-                st.dataframe(cleaned_df[clean_preview_cols].head(8) if clean_preview_cols else cleaned_df.head(8), use_container_width=True)
-
-        st.markdown("---")
-
-        # 4. Detailed Missing Values Audit & Chart
-        st.subheader("📊 Missing Values Audit per Column (Before vs. After)")
-
-        col_audit_data = []
-        for col_name, audit_info in audit_report.get("column_audit", {}).items():
-            col_audit_data.append({
-                "Original Column": col_name,
-                "Standardized Column": audit_info["mapped_to"],
-                "Raw Dtype": audit_info["raw_dtype"],
-                "Cleaned Dtype": audit_info["clean_dtype"],
-                "Raw Missing Count": audit_info["raw_missing"],
-                "Raw Missing (%)": f"{audit_info['raw_missing_pct']}%",
-                "Cleaned Missing Count": str(audit_info["clean_missing"]),
-                "Cleaned Missing (%)": f"{audit_info['clean_missing_pct']}%" if isinstance(audit_info["clean_missing"], int) else "N/A",
-            })
-
-        if col_audit_data:
-            audit_table_df = pd.DataFrame(col_audit_data)
-            st.dataframe(audit_table_df, use_container_width=True, hide_index=True)
-
-        # Plotly Missing Values Chart
+        # Missing Values Breakdown Chart
         missing_before_dict = audit_report["missing_before"]
         missing_after_dict = audit_report["missing_after"]
 
         missing_chart_data = []
         for col, count in missing_before_dict.items():
             if count > 0 or missing_after_dict.get(col, 0) > 0:
-                missing_chart_data.append({"Column": col, "Stage": "Before Cleaning", "Missing Count": count})
-                missing_chart_data.append({"Column": col, "Stage": "After Cleaning", "Missing Count": missing_after_dict.get(col, 0)})
+                missing_chart_data.append({"Column": col, "Stage": "Raw Before", "Missing Count": count})
+                missing_chart_data.append({"Column": col, "Stage": "Cleaned After", "Missing Count": missing_after_dict.get(col, 0)})
 
-        if missing_chart_data:
+        if missing_chart_data and HAS_PLOTLY:
             missing_df = pd.DataFrame(missing_chart_data)
-            if HAS_PLOTLY:
-                fig_miss = px.bar(
-                    missing_df,
-                    x="Missing Count",
-                    y="Column",
-                    color="Stage",
-                    barmode="group",
-                    orientation="h",
-                    title="Missing Value Count per Column (Raw vs Cleaned)",
-                    color_discrete_map={"Before Cleaning": "#ef4444", "After Cleaning": "#10b981"},
-                    text="Missing Count"
-                )
-                fig_miss.update_traces(textposition="outside")
-                st.plotly_chart(fig_miss, use_container_width=True)
-            else:
-                st.dataframe(missing_df, use_container_width=True)
-
-        st.markdown("---")
-
-        # 5. Step-by-Step Data Transformation Pipeline
-        st.subheader("🛠️ Step-by-Step Data Transformation Pipeline")
-
-        pipeline_steps = [
-            {
-                "Stage": "1. Column Header Standardization",
-                "Problem Detected": "Inconsistent column naming conventions across dataset versions (e.g. `Time_taken(min)`, `Road_traffic_density`, `Weatherconditions`).",
-                "Transformation Method": "Applied dynamic fuzzy dictionary matching to rename raw headers into clean targets (`Time_taken (min)`, `Road_traffic_density`, `Weather_conditions`, `Delivery_person_Age`, `Delivery_person_Ratings`, `distance_km`, `City`, `Vehicle_condition`).",
-                "Impact / Result": f"{len(audit_report['column_mapping'])} columns standardized cleanly."
-            },
-            {
-                "Stage": "2. String Normalization & Noise Removal",
-                "Problem Detected": "Prefix noise (e.g., `'conditions Sunny'`), whitespace padding, and string literal `'nan'` values.",
-                "Transformation Method": "Stripped whitespace, removed `'conditions '` prefix in Weather_conditions, and mapped string `'nan'` / `'NaN'` literals to true `np.nan`.",
-                "Impact / Result": "Categorical values grouped cleanly into true unique buckets without duplicates."
-            },
-            {
-                "Stage": "3. Great-Circle Distance Math (Haversine)",
-                "Problem Detected": "Raw dataset lacked direct delivery distance in kilometers.",
-                "Transformation Method": "Calculated great-circle Haversine distance ($\text{km}$) using restaurant lat/long and delivery location lat/long coordinates.",
-                "Impact / Result": f"Created `distance_km` column with mean distance of {fmt(basic_metrics['avg_distance'] if not is_empty else 0)} km."
-            },
-            {
-                "Stage": "4. Regex Numeric Extraction",
-                "Problem Detected": "Numeric metrics stored as mixed string formats (e.g. `'(min) 24'`, `'24 min'`).",
-                "Transformation Method": "Extracted float digits using regex `r'(\\d+\\.?\\d*)'` and coerced errors safely into numeric dtype.",
-                "Impact / Result": "`Time_taken (min)`, `Delivery_person_Age`, and `Delivery_person_Ratings` converted to true numeric dtypes."
-            },
-            {
-                "Stage": "5. Record Integrity Filtering & Duplicate Removal",
-                "Problem Detected": "Exact duplicate rows or non-positive delivery duration values.",
-                "Transformation Method": "Filtered non-positive duration values and dropped duplicate records using `.drop_duplicates()`.",
-                "Impact / Result": f"{audit_report['duplicates_removed']} duplicate records removed; {audit_report['cleaned_rows']:,} valid rows retained."
-            }
-        ]
-
-        step_df = pd.DataFrame(pipeline_steps)
-        st.table(step_df)
-
-        st.markdown("---")
-
-        # 6. Interactive Column-by-Column Inspector
-        st.subheader("🔍 Interactive Column Cleaning Inspector")
-        st.caption("Select any dataset column to inspect how its values, dtypes, and missing counts changed during cleaning.")
-
-        col_to_inspect = st.selectbox("Select Column to Inspect", options=list(raw_df.columns))
-
-        if col_to_inspect:
-            ci1, ci2, ci3 = st.columns(3)
-            raw_dtype = str(raw_df[col_to_inspect].dtype)
-            raw_nulls = int(raw_df[col_to_inspect].isnull().sum())
-
-            # Find matching cleaned column name
-            mapped_name = audit_report["column_mapping"].get(col_to_inspect.strip(), col_to_inspect.strip())
-            clean_exists = mapped_name in cleaned_df.columns
-
-            with ci1:
-                st.write(f"**Original Column**: `{col_to_inspect}`")
-                st.write(f"**Mapped Target**: `{mapped_name}`")
-            with ci2:
-                st.write(f"**Dtype Before**: `{raw_dtype}`")
-                st.write(f"**Missing Before**: `{raw_nulls:,}` ({round(raw_nulls/len(raw_df)*100, 2)}%)")
-            with ci3:
-                if clean_exists:
-                    clean_nulls = int(cleaned_df[mapped_name].isnull().sum())
-                    st.write(f"**Dtype After**: `{cleaned_df[mapped_name].dtype}`")
-                    st.write(f"**Missing After**: `{clean_nulls:,}` ({round(clean_nulls/len(cleaned_df)*100, 2)}%)")
-                else:
-                    st.write("**Status**: Column converted / merged")
-
-            st.write("**Sample Raw Values vs Cleaned Values:**")
-            samp_col1, samp_col2 = st.columns(2)
-            with samp_col1:
-                st.write("*Raw Sample Values (First 5)*")
-                st.write(raw_df[col_to_inspect].head(5).tolist())
-            with samp_col2:
-                if clean_exists:
-                    st.write("*Cleaned Sample Values (First 5)*")
-                    st.write(cleaned_df[mapped_name].head(5).tolist())
-
-        st.markdown("---")
-
-        with st.expander("🔍 View Complete Cleaned Data Types Table"):
-            dtypes_df = pd.DataFrame({
-                "Column": [str(c) for c in cleaned_df.columns],
-                "Data Type": [str(d) for d in cleaned_df.dtypes]
-            })
-            st.dataframe(dtypes_df, use_container_width=True, hide_index=True)
+            fig_miss = px.bar(
+                missing_df,
+                x="Missing Count",
+                y="Column",
+                color="Stage",
+                barmode="group",
+                orientation="h",
+                color_discrete_map={"Raw Before": "#f43f5e", "Cleaned After": "#10b981"},
+                text="Missing Count"
+            )
+            fig_miss.update_traces(textposition="outside")
+            apply_dark_plotly_theme(fig_miss, title="Missing Value Audit per Feature (Raw vs Cleaned)", height=320)
+            st.plotly_chart(fig_miss, use_container_width=True)
 
     # ------------------------------------------------------------------------------
     # TAB 3: COMPETITION QUESTIONS (Q1, Q2, Q3)
     # ------------------------------------------------------------------------------
     with tab_comp:
-        st.header("🏆 Competition Questions & Programmatic Solutions")
-
         if is_empty:
-            st.info("No data available for the selected filter combination.")
+            st.info("No data available for the selected filters.")
         else:
-            # Q1: Traffic Impact
-            st.subheader("Q1: Which road traffic condition has the highest average delivery time?")
             q1_res = answer_q1_traffic_impact(filtered_df)
+            q2_res = answer_q2_distance_impact(filtered_df)
+            q3_res = answer_q3_combined_conditions(filtered_df)
 
-            qc1, qc2 = st.columns([1, 2])
-            with qc1:
-                st.info(f"**Highest Traffic Delay Condition**: `{q1_res['highest_condition']}`")
-                st.success(f"**Average Delivery Time**: `{q1_res['highest_avg_time']} minutes`")
-            with qc2:
-                st.write("**Average Delivery Time by Traffic Density Table:**")
+            # Q1 Hero Card
+            render_html(
+                f"""
+                <div class="highlight-card amber">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #fbbf24;">🚦 Question 1: Road Traffic Bottleneck</h4>
+                        <span class="kpi-pill" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-size: 0.8rem;">
+                            CRITICAL DELAY DRIVER
+                        </span>
+                    </div>
+                    <div style="font-size: 0.95rem; color: #e2e8f0; margin-bottom: 12px;">
+                        <b>Prompt:</b> Which road traffic condition has the highest average delivery time?<br>
+                        <b>Finding:</b> Deliveries during <b>'{q1_res['highest_condition']}'</b> traffic encounter the highest delay, 
+                        averaging <b>{q1_res['highest_avg_time']} minutes</b>.
+                    </div>
+                </div>
+                """
+            )
+
+            q1_c1, q1_c2 = st.columns([1, 1])
+            with q1_c1:
                 t_df = pd.DataFrame([
                     {"Traffic Density": k, "Avg Delivery Time (min)": v}
                     for k, v in q1_res["traffic_table"].items()
                 ])
-                st.dataframe(t_df, use_container_width=True)
+                st.dataframe(t_df, use_container_width=True, hide_index=True)
+            with q1_c2:
+                if HAS_PLOTLY and q1_res["traffic_table"]:
+                    fig_q1 = px.bar(
+                        t_df,
+                        x="Traffic Density",
+                        y="Avg Delivery Time (min)",
+                        text="Avg Delivery Time (min)",
+                        color="Traffic Density",
+                        color_discrete_map={"Jam": "#ef4444", "High": "#f97316", "Medium": "#f59e0b", "Low": "#10b981"},
+                    )
+                    fig_q1.update_traces(texttemplate="%{text:.2f} m", textposition="outside")
+                    apply_dark_plotly_theme(fig_q1, title="Delivery Time by Traffic Density", height=280)
+                    st.plotly_chart(fig_q1, use_container_width=True)
 
-            st.markdown("---")
+            st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
 
-            # Q2: Distance Impact
-            st.subheader("Q2: How does delivery distance affect delivery time?")
-            q2_res = answer_q2_distance_impact(filtered_df)
+            # Q2 Hero Card
+            render_html(
+                f"""
+                <div class="highlight-card cyan">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #38bdf8;">📏 Question 2: Spatial Distance vs. Time Correlation</h4>
+                        <span class="kpi-pill" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.8rem;">
+                            PEARSON r = {q2_res['correlation']}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.95rem; color: #e2e8f0; margin-bottom: 12px;">
+                        <b>Prompt:</b> How does delivery distance affect delivery time?<br>
+                        <b>Finding:</b> Pearson correlation is <b>{q2_res['correlation']}</b> ({q2_res['interpretation']}).
+                    </div>
+                </div>
+                """
+            )
 
-            qd1, qd2 = st.columns([1, 2])
-            with qd1:
-                st.metric("Distance vs Time Correlation", f"{q2_res['correlation']}")
-                st.write(f"**Conclusion**: {q2_res['interpretation']}")
-            with qd2:
-                st.write("**Average Delivery Time by Distance Bins:**")
+            q2_c1, q2_c2 = st.columns([1, 1])
+            with q2_c1:
                 bin_df = pd.DataFrame([
-                    {"Distance Range": k, "Avg Delivery Time (min)": v}
+                    {"Distance Tier": k, "Avg Delivery Time (min)": v}
                     for k, v in q2_res["distance_bins_table"].items()
                 ])
-                st.dataframe(bin_df, use_container_width=True)
+                st.dataframe(bin_df, use_container_width=True, hide_index=True)
+            with q2_c2:
+                if HAS_PLOTLY and q2_res["distance_bins_table"]:
+                    fig_q2 = px.bar(
+                        bin_df,
+                        x="Distance Tier",
+                        y="Avg Delivery Time (min)",
+                        text="Avg Delivery Time (min)",
+                        color="Avg Delivery Time (min)",
+                        color_continuous_scale="Viridis",
+                    )
+                    fig_q2.update_traces(texttemplate="%{text:.2f} m", textposition="outside")
+                    apply_dark_plotly_theme(fig_q2, title="Duration Across Distance Tiers", height=280)
+                    st.plotly_chart(fig_q2, use_container_width=True)
 
-            st.markdown("---")
+            st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
 
-            # Q3: Combined Conditions
-            st.subheader("Q3: Which combination of weather condition and traffic density has the highest average delivery time?")
-            q3_res = answer_q3_combined_conditions(filtered_df)
+            # Q3 Hero Card
+            render_html(
+                f"""
+                <div class="highlight-card rose">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #fb7185;">🌧️ Question 3: Compounding Weather + Traffic Bottlenecks</h4>
+                        <span class="kpi-pill" style="background: rgba(244, 63, 94, 0.2); color: #fb7185; font-size: 0.8rem;">
+                            WORST: {q3_res['highest_avg_time']} MIN
+                        </span>
+                    </div>
+                    <div style="font-size: 0.95rem; color: #e2e8f0; margin-bottom: 12px;">
+                        <b>Prompt:</b> Which combination of weather condition and traffic density has the highest average delivery time?<br>
+                        <b>Finding:</b> The worst combination is <b>'{q3_res['worst_weather']}' Weather</b> combined with <b>'{q3_res['worst_traffic']}' Traffic</b>, 
+                        resulting in an average delivery time of <b>{q3_res['highest_avg_time']} minutes</b>.
+                    </div>
+                </div>
+                """
+            )
 
-            qw1, qw2 = st.columns([1, 2])
-            with qw1:
-                st.warning(f"**Worst Weather**: `{q3_res['worst_weather']}`")
-                st.warning(f"**Worst Traffic**: `{q3_res['worst_traffic']}`")
-                st.error(f"**Highest Average Delivery Time**: `{q3_res['highest_avg_time']} minutes`")
-            with qw2:
-                st.write("**Top Weather + Traffic Combinations:**")
-                comb_df = pd.DataFrame([
-                    {"Weather + Traffic Combination": k, "Avg Delivery Time (min)": v}
-                    for k, v in q3_res["combined_table"].items()
-                ])
-                st.dataframe(comb_df.head(10), use_container_width=True)
+            comb_df = pd.DataFrame([
+                {"Weather + Traffic Combination": k, "Avg Delivery Time (min)": v}
+                for k, v in q3_res["combined_table"].items()
+            ])
+            st.dataframe(comb_df.head(10), use_container_width=True, hide_index=True)
 
     # ------------------------------------------------------------------------------
-    # TAB 4: VISUALIZATIONS
+    # TAB 4: INTERACTIVE VISUALIZATIONS
     # ------------------------------------------------------------------------------
     with tab_viz:
-        st.header("📈 Publication-Grade Operational Data Visualizations")
-
         if is_empty:
-            st.info("No data available to display for the selected filter combination.")
+            st.info("No data available to display for the selected filters.")
         else:
             q1_res = answer_q1_traffic_impact(filtered_df)
             q2_res = answer_q2_distance_impact(filtered_df)
 
             viz_engine = st.radio(
-                "Select Visualization Engine:",
-                options=["✨ Plotly Interactive Charts", "📊 Seaborn / Matplotlib High-DPI Static PNGs"],
+                "Visualization Engine:",
+                options=["✨ Plotly Interactive High-DPI Charts", "📊 High-Resolution Matplotlib PNGs"],
                 horizontal=True,
-                key="viz_engine_radio"
+                key="viz_engine_toggle"
             )
-            st.markdown("---")
+            st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-            if "Plotly" in viz_engine:
-                # ==============================================================
-                # PLOTLY INTERACTIVE MODE
-                # ==============================================================
-                chart_col1, chart_col2 = st.columns(2)
+            if "Plotly" in viz_engine and HAS_PLOTLY:
+                row1_c1, row1_c2 = st.columns(2)
 
-                # CHART 1: Traffic Density Bar Chart
-                with chart_col1:
-                    st.subheader("Chart 1: Average Delivery Time by Traffic Density")
+                # Chart 1: Traffic
+                with row1_c1:
                     if q1_res["traffic_table"]:
                         traffic_df = pd.DataFrame({
                             "Traffic Density": list(q1_res["traffic_table"].keys()),
                             "Avg Delivery Time (min)": list(q1_res["traffic_table"].values()),
                         })
-                        
-                        # Color palette mapping
-                        color_map = {"Jam": "#dc2626", "High": "#ea580c", "Medium": "#f59e0b", "Low": "#16a34a"}
-                        
                         fig1 = px.bar(
                             traffic_df,
                             x="Traffic Density",
                             y="Avg Delivery Time (min)",
                             text="Avg Delivery Time (min)",
                             color="Traffic Density",
-                            color_discrete_map=color_map,
-                            title="<b>Average Delivery Time by Traffic Density</b>",
-                            labels={
-                                "Traffic Density": "Road Traffic Density",
-                                "Avg Delivery Time (min)": "Average Delivery Time (minutes)"
-                            },
-                            template="plotly_white",
+                            color_discrete_map={"Jam": "#ef4444", "High": "#f97316", "Medium": "#f59e0b", "Low": "#10b981"},
                         )
                         fig1.update_traces(texttemplate="%{text:.2f} min", textposition="outside", cliponaxis=False)
-                        fig1.update_layout(
-                            xaxis_title="Road Traffic Density",
-                            yaxis_title="Average Delivery Time (minutes)",
-                            font=dict(size=12),
-                            yaxis=dict(range=[0, max(traffic_df["Avg Delivery Time (min)"]) * 1.2]),
-                            showlegend=False
-                        )
+                        fig1.update_layout(yaxis=dict(range=[0, max(traffic_df["Avg Delivery Time (min)"]) * 1.25]), showlegend=False)
+                        apply_dark_plotly_theme(fig1, title="Average Delivery Time by Traffic Density", height=380)
                         st.plotly_chart(fig1, use_container_width=True)
-                        st.caption(f"📌 **Key Finding**: `{q1_res['highest_condition']}` traffic experiences the highest delivery time averaging **{q1_res['highest_avg_time']} min**.")
-                    else:
-                        st.info("No traffic data available for current filters.")
 
-                # CHART 2: Distance vs. Delivery Time Scatter Plot
-                with chart_col2:
-                    st.subheader("Chart 2: Delivery Distance vs Delivery Time")
+                # Chart 2: Distance Scatter
+                with row1_c2:
                     valid_scatter = filtered_df[(filtered_df["distance_km"] > 0) & (filtered_df["Time_taken (min)"] > 0)].dropna(subset=["distance_km", "Time_taken (min)"])
                     if len(valid_scatter) > 0:
                         sample_scatter = valid_scatter.sample(min(2500, len(valid_scatter)), random_state=42)
-                        
                         fig2 = px.scatter(
                             sample_scatter,
                             x="distance_km",
                             y="Time_taken (min)",
-                            opacity=0.45,
+                            opacity=0.4,
                             trendline="ols" if (HAS_STATSMODELS and len(sample_scatter) > 10) else None,
-                            trendline_color_override="#dc2626",
-                            title="<b>Delivery Distance (km) vs. Delivery Time (minutes)</b>",
-                            labels={
-                                "distance_km": "Delivery Distance (km)",
-                                "Time_taken (min)": "Delivery Time (minutes)"
-                            },
-                            color_discrete_sequence=["#2563eb"],
-                            template="plotly_white",
+                            trendline_color_override="#ef4444",
+                            color_discrete_sequence=["#38bdf8"],
+                            labels={"distance_km": "Distance (km)", "Time_taken (min)": "Delivery Time (min)"}
                         )
-                        fig2.update_layout(
-                            xaxis_title="Delivery Distance (km)",
-                            yaxis_title="Delivery Time (minutes)",
-                            font=dict(size=12),
-                        )
+                        apply_dark_plotly_theme(fig2, title="Spatial Distance (km) vs. Delivery Time (min)", height=380)
                         st.plotly_chart(fig2, use_container_width=True)
-                        st.caption(f"📌 **Key Finding**: Correlation is **{q2_res['correlation']}** ({q2_res['interpretation']}).")
-                    else:
-                        st.info("No distance vs time data available for current filters.")
 
-                st.markdown("---")
-                chart_col3, chart_col4 = st.columns(2)
+                st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+                row2_c1, row2_c2 = st.columns(2)
 
-                # CHART 3: Weather Condition Bar Chart
-                with chart_col3:
-                    st.subheader("Chart 3: Average Delivery Time by Weather Condition")
+                # Chart 3: Weather
+                with row2_c1:
                     if "Weather_conditions" in filtered_df.columns and "Time_taken (min)" in filtered_df.columns:
                         weather_avg = (
                             filtered_df.groupby("Weather_conditions")["Time_taken (min)"]
@@ -733,30 +1057,15 @@ if data_loaded:
                                 y="Time_taken (min)",
                                 text="Time_taken (min)",
                                 color="Weather_conditions",
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
-                                title="<b>Average Delivery Time by Weather Condition</b>",
-                                labels={
-                                    "Weather_conditions": "Weather Condition",
-                                    "Time_taken (min)": "Average Delivery Time (minutes)"
-                                },
-                                template="plotly_white",
+                                color_discrete_sequence=px.colors.qualitative.Pastel,
                             )
                             fig3.update_traces(texttemplate="%{text:.2f} min", textposition="outside", cliponaxis=False)
-                            fig3.update_layout(
-                                xaxis_title="Weather Condition",
-                                yaxis_title="Average Delivery Time (minutes)",
-                                font=dict(size=12),
-                                yaxis=dict(range=[0, max(weather_avg["Time_taken (min)"]) * 1.2]),
-                                showlegend=False
-                            )
+                            fig3.update_layout(yaxis=dict(range=[0, max(weather_avg["Time_taken (min)"]) * 1.25]), showlegend=False)
+                            apply_dark_plotly_theme(fig3, title="Average Delivery Duration by Weather Condition", height=380)
                             st.plotly_chart(fig3, use_container_width=True)
-                            st.caption(f"📌 **Key Finding**: `{weather_avg.iloc[0]['Weather_conditions']}` weather causes the longest delivery duration (**{weather_avg.iloc[0]['Time_taken (min)']} min**).")
-                        else:
-                            st.info("No weather data available for current filters.")
 
-                # CHART 4: Distance Bins Analysis Bar Chart
-                with chart_col4:
-                    st.subheader("Chart 4: Average Delivery Time by Distance Bins")
+                # Chart 4: Distance Bins
+                with row2_c2:
                     if q2_res["distance_bins_table"]:
                         bin_df = pd.DataFrame({
                             "Distance Range": list(q2_res["distance_bins_table"].keys()),
@@ -769,218 +1078,183 @@ if data_loaded:
                             text="Avg Delivery Time (min)",
                             color="Distance Range",
                             color_discrete_sequence=px.colors.sequential.Teal,
-                            title="<b>Average Delivery Time by Distance Tier (km)</b>",
-                            labels={
-                                "Distance Range": "Distance Range Tier (km)",
-                                "Avg Delivery Time (min)": "Average Delivery Time (minutes)"
-                            },
-                            template="plotly_white",
                         )
                         fig4.update_traces(texttemplate="%{text:.2f} min", textposition="outside", cliponaxis=False)
-                        fig4.update_layout(
-                            xaxis_title="Distance Tier (km)",
-                            yaxis_title="Average Delivery Time (minutes)",
-                            font=dict(size=12),
-                            yaxis=dict(range=[0, max(bin_df["Avg Delivery Time (min)"]) * 1.2]),
-                            showlegend=False
-                        )
+                        fig4.update_layout(yaxis=dict(range=[0, max(bin_df["Avg Delivery Time (min)"]) * 1.25]), showlegend=False)
+                        apply_dark_plotly_theme(fig4, title="Delivery Duration by Distance Tier (km)", height=380)
                         st.plotly_chart(fig4, use_container_width=True)
-                        st.caption("📌 **Key Finding**: Delivery time increases progressively across distance tiers.")
-                    else:
-                        st.info("No distance bin data available for current filters.")
 
             else:
-                # ==============================================================
-                # SEABORN / MATPLOTLIB HIGH-DPI STATIC MODE
-                # ==============================================================
                 c_img1, c_img2 = st.columns(2)
                 with c_img1:
-                    st.subheader("Chart 1: Average Delivery Time by Traffic Density")
                     img1_path = plot_traffic_impact(q1_res["traffic_table"])
                     if img1_path and os.path.exists(img1_path):
                         st.image(img1_path, use_container_width=True)
-                    else:
-                        st.info("No traffic data available to render chart image.")
-
                 with c_img2:
-                    st.subheader("Chart 2: Delivery Distance vs Delivery Time")
                     img2_path = plot_distance_vs_time(filtered_df)
                     if img2_path and os.path.exists(img2_path):
                         st.image(img2_path, use_container_width=True)
-                    else:
-                        st.info("No distance vs time data available to render chart image.")
-
-                st.markdown("---")
-                c_img3, c_img4 = st.columns(2)
-                with c_img3:
-                    st.subheader("Chart 3: Average Delivery Time by Weather Condition")
-                    img3_path = plot_weather_impact(filtered_df)
-                    if img3_path and os.path.exists(img3_path):
-                        st.image(img3_path, use_container_width=True)
-                    else:
-                        st.info("No weather data available to render chart image.")
 
     # ------------------------------------------------------------------------------
     # TAB 5: BUSINESS INSIGHTS
     # ------------------------------------------------------------------------------
     with tab_insights:
-        st.header("💡 Data-Driven Business Insights")
-
         if is_empty:
-            st.info("No data available to generate business insights for the selected filter combination.")
+            st.info("No data available to formulate business insights.")
         else:
             q1_res = answer_q1_traffic_impact(filtered_df)
             q2_res = answer_q2_distance_impact(filtered_df)
             q3_res = answer_q3_combined_conditions(filtered_df)
             insights = generate_business_insights(basic_metrics, q1_res, q2_res, q3_res)
 
-            if not insights:
-                st.info("Insufficient data to formulate business insights for the current filter selection.")
-            else:
-                for ins in insights:
-                    with st.container():
-                        st.subheader(f"Insight {ins['insight_num']}: {ins['title']}")
-                        c_ins1, c_ins2 = st.columns([1, 1])
-                        with c_ins1:
-                            st.markdown(f"**Finding**: {ins['finding']}")
-                            st.markdown(f"**Evidence**: `{ins['evidence']}`")
-                        with c_ins2:
-                            st.markdown(f"**Business Meaning**: {ins['business_meaning']}")
-                            st.markdown(f"**Recommended Action**: {ins['recommended_action']}")
-                        st.markdown("---")
-
-    # ------------------------------------------------------------------------------
-    # TAB 6: AI BUSINESS EXPLANATION & INTERACTIVE CHATBOT
-    # ------------------------------------------------------------------------------
-    with tab_ai:
-        st.header("🤖 AI Business Intelligence & Interactive Assistant")
-
-        ai_subtab_summary, ai_subtab_chat = st.tabs([
-            "📊 AI Executive Summary",
-            "💬 Interactive AI Assistant Chatbot"
-        ])
-
-        if is_empty:
-            with ai_subtab_summary:
-                st.info("No delivery records available to generate an AI explanation for the selected filters.")
-            with ai_subtab_chat:
-                st.info("No delivery records available for the AI chatbot to answer questions. Please adjust filters.")
-        else:
-            q1_res = answer_q1_traffic_impact(filtered_df)
-            q2_res = answer_q2_distance_impact(filtered_df)
-            q3_res = answer_q3_combined_conditions(filtered_df)
-
-            summary_dict = {
-                "total_deliveries": basic_metrics["total_deliveries"],
-                "avg_delivery_time": basic_metrics["avg_delivery_time"],
-                "min_delivery_time": basic_metrics["min_delivery_time"],
-                "max_delivery_time": basic_metrics["max_delivery_time"],
-                "avg_distance": basic_metrics["avg_distance"],
-                "avg_speed_kmh": basic_metrics["avg_speed_kmh"],
-                "avg_rating": basic_metrics["avg_rating"],
-                "avg_age": basic_metrics["avg_age"],
-                "highest_traffic_condition": q1_res["highest_condition"],
-                "highest_traffic_avg_time": q1_res["highest_avg_time"],
-                "distance_correlation": q2_res["correlation"],
-                "worst_weather": q3_res["worst_weather"],
-                "worst_traffic": q3_res["worst_traffic"],
-                "worst_combined_avg_time": q3_res["highest_avg_time"],
-            }
-
-            # SUBTAB 1: AI Executive Summary
-            with ai_subtab_summary:
-                st.markdown(
-                    """
-                    This section uses an LLM API to convert pre-calculated statistics 
-                    into a concise executive presentation summary.
+            for ins in insights:
+                num = ins['insight_num']
+                card_class = "rose" if num == 1 else ("amber" if num == 2 else "indigo")
+                render_html(
+                    f"""
+                    <div class="highlight-card {card_class}">
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #ffffff; margin-bottom: 8px;">
+                            Strategic Insight #{num}: {ins['title']}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+                            <div>
+                                <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">FINDING & EVIDENCE</div>
+                                <div style="color: #f1f5f9; font-size: 0.92rem; margin-top: 4px;">{ins['finding']}</div>
+                                <div style="color: #38bdf8; font-size: 0.85rem; margin-top: 4px; font-family: 'JetBrains Mono', monospace;">Evidence: {ins['evidence']}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">IMPACT & RECOMMENDED ACTION</div>
+                                <div style="color: #f1f5f9; font-size: 0.92rem; margin-top: 4px;">{ins['business_meaning']}</div>
+                                <div style="color: #10b981; font-weight: 600; font-size: 0.88rem; margin-top: 6px;">Action: {ins['recommended_action']}</div>
+                            </div>
+                        </div>
+                    </div>
                     """
                 )
 
-                if "ai_summary_output" not in st.session_state:
-                    st.session_state["ai_summary_output"] = None
+    # ------------------------------------------------------------------------------
+    # TAB 6: AI BUSINESS INTELLIGENCE & CHATBOT
+    # ------------------------------------------------------------------------------
+    with tab_ai:
+        ai_subtab_summary, ai_subtab_chat = st.tabs([
+            "📊 Executive Briefing Report",
+            "💬 Conversational Operations Assistant"
+        ])
 
-                if st.button("🚀 Generate / Refresh AI Business Summary", key="ai_generate_btn"):
-                    with st.spinner("Generating AI executive explanation from calculated statistics..."):
-                        st.session_state["ai_summary_output"] = generate_ai_explanation(summary_dict)
+        summary_dict = {
+            "total_deliveries": basic_metrics["total_deliveries"],
+            "avg_delivery_time": basic_metrics["avg_delivery_time"],
+            "min_delivery_time": basic_metrics["min_delivery_time"],
+            "max_delivery_time": basic_metrics["max_delivery_time"],
+            "avg_distance": basic_metrics["avg_distance"],
+            "avg_speed_kmh": basic_metrics["avg_speed_kmh"],
+            "avg_rating": basic_metrics["avg_rating"],
+            "avg_age": basic_metrics["avg_age"],
+            "highest_traffic_condition": q1_res["highest_condition"] if not is_empty else "N/A",
+            "highest_traffic_avg_time": q1_res["highest_avg_time"] if not is_empty else "N/A",
+            "distance_correlation": q2_res["correlation"] if not is_empty else "N/A",
+            "worst_weather": q3_res["worst_weather"] if not is_empty else "N/A",
+            "worst_traffic": q3_res["worst_traffic"] if not is_empty else "N/A",
+            "worst_combined_avg_time": q3_res["highest_avg_time"] if not is_empty else "N/A",
+        }
 
-                if st.session_state["ai_summary_output"]:
-                    st.markdown(st.session_state["ai_summary_output"])
-                else:
-                    st.info("Click the button above to generate the LLM explanation from calculated metrics.")
+        # Subtab 1: AI Summary
+        with ai_subtab_summary:
+            render_html(
+                """
+                <div class="executive-card">
+                    <div class="card-title">🤖 AI-Generated Strategic Briefing</div>
+                    <div style="font-size: 0.88rem; color: #94a3b8;">
+                        Synthesizes pre-calculated operational metrics into an executive-ready presentation briefing.
+                    </div>
+                </div>
+                """
+            )
 
-            # SUBTAB 2: Interactive AI Assistant Chatbot
-            with ai_subtab_chat:
-                st.subheader("💬 Ask AI Anything About the Food Delivery Analytics")
-                st.caption("Ask questions about traffic delays, weather impact, distance vs speed, driver ratings, or strategic recommendations.")
+            if "ai_summary_output" not in st.session_state:
+                st.session_state["ai_summary_output"] = None
 
-                # Initialize Chatbot Session State Messages
-                if "chatbot_messages" not in st.session_state:
-                    st.session_state["chatbot_messages"] = [
-                        {
-                            "role": "assistant",
-                            "content": (
-                                "👋 Hello! I am your **Food Delivery AI Analytics Assistant**.\n\n"
-                                "I can answer any questions about your delivery dataset, operational delays, weather bottlenecks, "
-                                "distance correlation, and strategic fulfillment recommendations!\n\n"
-                                "**Try asking:**\n"
-                                "- *What road traffic condition causes the worst delays?*\n"
-                                "- *How does weather affect delivery performance?*\n"
-                                "- *What is the correlation between delivery distance and time?*\n"
-                                "- *What recommendations do you have to reduce delivery times?*"
-                            )
-                        }
-                    ]
+            if st.button("✨ Synthesize Executive Briefing", key="btn_gen_ai_brief"):
+                with st.spinner("Synthesizing telemetry data into executive insights..."):
+                    st.session_state["ai_summary_output"] = generate_ai_explanation(summary_dict)
 
-                # Sample Quick-Question Prompt Buttons
-                st.markdown("**Quick Questions:**")
-                q_col1, q_col2, q_col3, q_col4 = st.columns(4)
-                preset_prompt = None
+            if st.session_state["ai_summary_output"]:
+                render_html(
+                    f"""
+                    <div class="highlight-card indigo" style="margin-top: 16px;">
+                        {st.session_state["ai_summary_output"]}
+                    </div>
+                    """
+                )
+            else:
+                st.info("Click 'Synthesize Executive Briefing' to generate a live business analysis report.")
 
-                with q_col1:
-                    if st.button("🚦 Traffic Delays", key="btn_q_traffic"):
-                        preset_prompt = "What road traffic condition causes the worst delivery delays?"
-                with q_col2:
-                    if st.button("🌧️ Weather Impact", key="btn_q_weather"):
-                        preset_prompt = "Which weather condition slows down deliveries the most?"
-                with q_col3:
-                    if st.button("📏 Distance vs Speed", key="btn_q_distance"):
-                        preset_prompt = "How does delivery distance correlate with delivery duration and fleet speed?"
-                with q_col4:
-                    if st.button("💡 Top Recommendations", key="btn_q_recs"):
-                        preset_prompt = "What are the top 3 operational recommendations to optimize fulfillment?"
+        # Subtab 2: AI Chatbot
+        with ai_subtab_chat:
+            render_html(
+                """
+                <div class="executive-card">
+                    <div class="card-title">💬 Interactive Operations Copilot</div>
+                    <div style="font-size: 0.88rem; color: #94a3b8;">
+                        Ask natural language questions regarding fleet velocity, traffic bottlenecks, weather impacts, or dispatch optimizations.
+                    </div>
+                </div>
+                """
+            )
 
-                st.markdown("---")
+            if "chatbot_messages" not in st.session_state:
+                st.session_state["chatbot_messages"] = [
+                    {
+                        "role": "assistant",
+                        "content": (
+                            "👋 Welcome to the **SwiftPulse Fleet Assistant**!\n\n"
+                            "I can analyze operational delays, weather bottlenecks, distance-to-time correlations, and driver performance.\n\n"
+                            "**Quick Queries:**\n"
+                            "- *Which road traffic causes the worst bottlenecks?*\n"
+                            "- *How does distance correlate with transit duration?*\n"
+                            "- *What strategic actions reduce delivery times during rainy weather?*"
+                        )
+                    }
+                ]
 
-                # Render Chat Message History
-                for message in st.session_state["chatbot_messages"]:
-                    with st.chat_message(message["role"]):
-                        st.markdown(message["content"])
+            # Quick Prompt Buttons
+            q_c1, q_c2, q_c3, q_c4 = st.columns(4)
+            preset_prompt = None
+            with q_c1:
+                if st.button("🚦 Traffic Delays", key="btn_fast_traffic", use_container_width=True):
+                    preset_prompt = "What road traffic condition causes the worst delivery delays?"
+            with q_c2:
+                if st.button("🌧️ Weather Cascades", key="btn_fast_weather", use_container_width=True):
+                    preset_prompt = "Which weather condition slows down deliveries the most?"
+            with q_c3:
+                if st.button("📏 Distance Correlation", key="btn_fast_dist", use_container_width=True):
+                    preset_prompt = "How does delivery distance correlate with delivery duration and fleet speed?"
+            with q_c4:
+                if st.button("💡 Strategic Actions", key="btn_fast_strat", use_container_width=True):
+                    preset_prompt = "What are the top 3 operational recommendations to optimize fulfillment?"
 
-                # Handle User Input (via chat_input or sample buttons)
-                user_input = st.chat_input("Ask a question about the food delivery analytics...") or preset_prompt
+            # Message Stream
+            for msg in st.session_state["chatbot_messages"]:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
 
-                if user_input:
-                    # Append user message
-                    st.session_state["chatbot_messages"].append({"role": "user", "content": user_input})
-                    with st.chat_message("user"):
-                        st.markdown(user_input)
+            user_query = st.chat_input("Ask a question about delivery operations...") or preset_prompt
 
-                    # Generate AI Assistant response
-                    with st.chat_message("assistant"):
-                        with st.spinner("AI Assistant is analyzing dataset metrics..."):
-                            bot_reply = answer_user_question_ai(
-                                user_query=user_input,
-                                summary_results=summary_dict,
-                                conversation_history=st.session_state["chatbot_messages"]
-                            )
-                            st.markdown(bot_reply)
+            if user_query:
+                st.session_state["chatbot_messages"].append({"role": "user", "content": user_query})
+                with st.chat_message("user"):
+                    st.markdown(user_query)
 
-                    # Append assistant response to history
-                    st.session_state["chatbot_messages"].append({"role": "assistant", "content": bot_reply})
+                with st.chat_message("assistant"):
+                    with st.spinner("Analyzing operational telemetry..."):
+                        reply = answer_user_question_ai(
+                            user_query=user_query,
+                            summary_results=summary_dict,
+                            conversation_history=st.session_state["chatbot_messages"]
+                        )
+                        st.markdown(reply)
+
+                st.session_state["chatbot_messages"].append({"role": "assistant", "content": reply})
 
 else:
-    st.warning("Dataset could not be loaded. Please ensure the CSV file is located in the 'data/' directory.")
-
-
-
-
+    st.error("Failed to load dataset. Please ensure the CSV file is located in the 'data/' directory.")

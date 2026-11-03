@@ -1,5 +1,14 @@
 import os
 import sys
+
+# Configure UTF-8 encoding on Windows consoles
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from src.data_loader import load_raw_data, inspect_raw_data
 from src.data_cleaning import clean_dataset
 from src.analysis import (
