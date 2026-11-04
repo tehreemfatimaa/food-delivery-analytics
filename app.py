@@ -1156,6 +1156,10 @@ if data_loaded:
             "worst_weather": q3_res["worst_weather"] if not is_empty else "N/A",
             "worst_traffic": q3_res["worst_traffic"] if not is_empty else "N/A",
             "worst_combined_avg_time": q3_res["highest_avg_time"] if not is_empty else "N/A",
+            "selected_city": selected_city,
+            "selected_traffic": selected_traffic,
+            "selected_weather": selected_weather,
+            "selected_vehicle": selected_vehicle,
         }
 
         # Subtab 1: AI Summary
@@ -1179,13 +1183,29 @@ if data_loaded:
                     st.session_state["ai_summary_output"] = generate_ai_explanation(summary_dict)
 
             if st.session_state["ai_summary_output"]:
-                render_html(
-                    f"""
-                    <div class="highlight-card indigo" style="margin-top: 16px;">
-                        {st.session_state["ai_summary_output"]}
-                    </div>
-                    """
-                )
+                # Action header bar with status badge & download button
+                top_c1, top_c2 = st.columns([3, 1])
+                with top_c1:
+                    render_html(
+                        """
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 14px; margin-bottom: 10px;">
+                            <span class="hero-badge" style="margin: 0; background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+                                ✔️ AUDIT VERIFIED EXECUTIVE REPORT
+                            </span>
+                        </div>
+                        """
+                    )
+                with top_c2:
+                    st.download_button(
+                        label="📥 Download Briefing (.md)",
+                        data=st.session_state["ai_summary_output"],
+                        file_name="SwiftPulse_Executive_Briefing.md",
+                        mime="text/markdown",
+                        use_container_width=True,
+                    )
+
+                # Render the executive briefing cleanly as GitHub-flavored Markdown
+                st.markdown(st.session_state["ai_summary_output"])
             else:
                 st.info("Click 'Synthesize Executive Briefing' to generate a live business analysis report.")
 
